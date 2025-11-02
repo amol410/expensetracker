@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.gradlew build:*)",
+      "Bash(gradlew.bat build:*)",
+      "Bash(./gradlew clean:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(./gradlew installDebug:*)",
+      "Bash(adb shell:*)",
+      "Bash(adb logcat:*)",
+      "Bash(gradlew.bat assembleDebug:*)",
+      "Bash(.gradlew.bat:*)",
+      "Bash(gradlew assembleDebug:*)",
+      "Bash(cmd /c \"gradlew.bat assembleDebug\")",
+      "Bash(\"C:\\Users\\Admin\\AndroidStudioProjects\\expense\\gradlew.bat\" assembleDebug)",
+      "Bash(adb devices:*)",
+      "Bash(\"C:\\Users\\Admin\\AndroidStudioProjects\\expense\\gradlew.bat\" clean)",
+      "Bash(dir \"C:\\Users\\Admin\\AndroidStudioProjects\\expense\\app\\src\\main\\java\\com\\dolphin\\expense\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

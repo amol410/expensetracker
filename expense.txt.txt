@@ -1,0 +1,223 @@
+# Expense Tracker Android App - Development Prompt
+
+## Project Overview
+Build a medium-level Android expense tracking application that stores data locally using Room database. The app should help users track their daily expenses with time-based segregation and basic analytics.
+
+## Core Requirements
+
+### 1. Technology Stack
+- **Language**: Kotlin
+- **Architecture**: MVVM (Model-View-ViewModel)
+- **Database**: Room (Local SQLite database)
+- **UI Framework**: Jetpack Compose or XML layouts (Material Design 3)
+- **Minimum SDK**: API 24 (Android 7.0)
+- **Dependency Injection**: Hilt or manual DI
+- **Async Operations**: Kotlin Coroutines + Flow
+
+### 2. Features
+
+#### Essential Features:
+1. **Add Expense**
+   - Amount input
+   - Category selection (Food, Transport, Shopping, Bills, Entertainment, Health, Others)
+   - Description/notes (optional)
+   - Date picker (defaults to today)
+   - Save to local Room database
+
+2. **View Expenses**
+   - List of all expenses with details
+   - Show: amount, category, description, date
+   - Sort by date (newest first)
+   - Swipe to delete functionality
+
+3. **Edit/Delete Expenses**
+   - Edit existing expense details
+   - Delete individual expenses
+   - Confirmation dialog for deletions
+
+4. **Time-Based Filtering**
+   - Daily view (today's expenses)
+   - Weekly view (last 7 days)
+   - Monthly view (current month)
+   - Quarterly view (last 3 months)
+   - Yearly view (current year)
+   - Custom date range picker
+   - Display total amount for selected period
+
+5. **Categories**
+   - Predefined categories with icons/colors
+   - Category-wise expense grouping
+   - View expenses by specific category
+
+6. **Basic Statistics**
+   - Total expenses by time period
+   - Category-wise breakdown (simple list or pie chart)
+   - Highest expense of the period
+   - Average daily/weekly/monthly spending
+
+#### Nice-to-Have Features:
+- Search expenses by description
+- Export data to CSV file
+- Dark mode support
+- Simple bar/line charts for trends
+- Budget setting and alerts
+- Recurring expenses
+
+### 3. Database Schema (Room)
+
+#### Expense Table:
+```
+Table: expenses
+- id (Long, Primary Key, Auto-generated)
+- amount (Double, Not Null)
+- category (String, Not Null)
+- description (String, Nullable)
+- date (Long, Timestamp in milliseconds, Not Null)
+- createdAt (Long, Timestamp, Not Null)
+- updatedAt (Long, Timestamp, Not Null)
+```
+
+#### DAO Operations:
+- Insert expense
+- Update expense
+- Delete expense
+- Get all expenses
+- Get expenses by date range
+- Get expenses by category
+- Get total amount by date range
+- Get category-wise totals
+
+### 4. App Structure
+
+#### Screens:
+1. **Home/Dashboard Screen**
+   - Summary of current month expenses
+   - Quick stats (total, top category)
+   - Recent expenses list (last 10)
+   - Floating Action Button to add expense
+
+2. **Add/Edit Expense Screen**
+   - Form with amount, category, description, date
+   - Save and Cancel buttons
+   - Input validation
+
+3. **All Expenses Screen**
+   - Time period selector (tabs or dropdown)
+   - Filtered expense list
+   - Total amount display
+   - Search bar (optional)
+
+4. **Statistics Screen**
+   - Time period selector
+   - Total expenses
+   - Category breakdown
+   - Simple charts (optional)
+
+5. **Settings Screen** (optional)
+   - Currency selection
+   - Theme toggle
+   - Export data option
+   - About app
+
+#### Navigation:
+- Bottom navigation bar OR navigation drawer
+- Screens: Home, Expenses, Statistics, (Settings)
+
+### 5. UI/UX Guidelines
+
+- Clean and intuitive interface
+- Material Design 3 components
+- Consistent color scheme
+- Category color coding
+- Empty state messages ("No expenses yet")
+- Loading states for database operations
+- Error handling with user-friendly messages
+- Proper keyboard handling for number inputs
+- Date picker dialog for date selection
+
+### 6. Implementation Details
+
+#### Room Database Setup:
+```kotlin
+@Entity(tableName = "expenses")
+data class ExpenseEntity(...)
+
+@Dao
+interface ExpenseDao {
+    @Insert, @Update, @Delete
+    @Query("SELECT * FROM expenses WHERE date BETWEEN :startDate AND :endDate ORDER BY date DESC")
+}
+
+@Database
+abstract class ExpenseDatabase : RoomDatabase()
+```
+
+#### Repository Pattern:
+- ExpenseRepository to handle data operations
+- Abstract database calls from ViewModels
+
+#### ViewModel:
+- Separate ViewModel for each screen
+- Use StateFlow/LiveData for UI state
+- Handle user actions and business logic
+
+#### Date Utilities:
+- Helper functions to get start/end of day, week, month, quarter, year
+- Date formatting functions
+
+### 7. Data Flow
+
+1. User adds expense → ViewModel → Repository → Room DAO → Database
+2. User views expenses → Repository queries Room → Flow/LiveData → ViewModel → UI updates
+3. User filters by period → Calculate date range → Query with range → Display filtered results
+
+### 8. Testing Considerations
+
+- Room database migration strategy
+- Input validation (positive amounts, required fields)
+- Edge cases (no expenses, large amounts, special characters)
+- Date calculations (month boundaries, leap years)
+
+### 9. Performance
+
+- Use Flow for reactive database queries
+- Implement pagination for large expense lists (optional)
+- Efficient date range queries with indexed columns
+- Avoid loading all data at once
+
+### 10. Deliverables
+
+- Complete Android Studio project
+- Gradle build files with dependencies
+- Room database implementation
+- All screens with navigation
+- Basic documentation (README)
+- APK file (optional)
+
+## Complexity Level: MEDIUM
+
+**Not included (too complex for medium level):**
+- Cloud sync/backup
+- Multi-user support
+- Advanced ML predictions
+- Complex animations
+- Bill splitting features
+- Receipt scanning with OCR
+- Multiple currency conversion with live rates
+
+**Not included (too simple, below medium level):**
+- Single screen app
+- No database (SharedPreferences only)
+- No time-based filtering
+- No categories
+
+## Success Criteria
+
+✅ User can add, edit, delete expenses
+✅ Data persists locally in Room database
+✅ Expenses can be viewed by different time periods
+✅ Basic statistics are calculated and displayed
+✅ App has clean, professional UI
+✅ No crashes, smooth navigation
+✅ Code follows MVVM architecture
+✅ Reasonable performance (smooth scrolling, quick database operations)
