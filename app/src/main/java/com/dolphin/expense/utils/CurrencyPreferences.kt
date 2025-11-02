@@ -12,6 +12,9 @@ import javax.inject.Singleton
 class CurrencyPreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    // Secondary constructor for non-Hilt usage
+    constructor(context: Context, dummy: Boolean) : this(context)
+
     private val prefs: SharedPreferences = context.getSharedPreferences(
         "currency_prefs",
         Context.MODE_PRIVATE

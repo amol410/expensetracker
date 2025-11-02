@@ -2,10 +2,12 @@ package com.dolphin.expense.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dolphin.expense.analytics.AnalyticsManager
 import com.dolphin.expense.data.BudgetEntity
 import com.dolphin.expense.data.ExpenseEntity
 import com.dolphin.expense.data.dao.CategoryTotal
 import com.dolphin.expense.data.repository.ExpenseRepository
+import com.dolphin.expense.inappmessaging.InAppMessagingManager
 import com.dolphin.expense.utils.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ExpenseViewModel @Inject constructor(
-    private val repository: ExpenseRepository
+    private val repository: ExpenseRepository,
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(ExpenseUiState())
@@ -70,25 +73,60 @@ class ExpenseViewModel @Inject constructor(
     
     fun addExpense(expense: ExpenseEntity) {
         viewModelScope.launch {
+            val existingExpenses = repository.getExpensesByDateRange(0, Long.MAX_VALUE).first()
+            val isFirstExpense = existingExpenses.isEmpty()
+
             repository.insertExpense(expense)
+
+            // Track analytics
+            analyticsManager.trackExpenseAdded(
+                amount = expense.amount,
+                category = expense.category,
+                description = expense.description,
+                isFirstExpense = isFirstExpense
+            )
+
+            // Trigger In-App Messaging events
+            if (isFirstExpense) {
+                InAppMessagingManager.triggerEvent(InAppMessagingManager.Events.FIRST_EXPENSE)
+            }
+            InAppMessagingManager.triggerEvent(InAppMessagingManager.Events.EXPENSE_ADDED)
         }
     }
     
     fun updateExpense(expense: ExpenseEntity) {
         viewModelScope.launch {
             repository.updateExpense(expense)
+
+            // Track analytics
+            analyticsManager.trackExpenseUpdated(
+                amount = expense.amount,
+                category = expense.category
+            )
         }
     }
     
     fun deleteExpense(expense: ExpenseEntity) {
         viewModelScope.launch {
             repository.deleteExpense(expense)
+
+            // Track analytics
+            analyticsManager.trackExpenseDeleted(
+                amount = expense.amount,
+                category = expense.category
+            )
+
+            // Trigger In-App Messaging event
+            InAppMessagingManager.triggerEvent(InAppMessagingManager.Events.EXPENSE_DELETED)
         }
     }
     
     fun setSelectedPeriod(period: TimePeriod) {
         _selectedPeriod.value = period
         updateDateRange(period)
+
+        // Track analytics
+        analyticsManager.trackPeriodChanged(period.name)
     }
     
     private fun updateDateRange(period: TimePeriod) {
@@ -144,10 +182,13 @@ class ExpenseViewModel @Inject constructor(
     fun setSelectedCategory(category: String?) {
         _selectedCategory.value = category
         if (category != null) {
+            // Track analytics
+            analyticsManager.trackCategoryFiltered(category)
+
             viewModelScope.launch {
                 val expenses = repository.getExpensesByCategory(category).first()
                 val totalAmount = expenses.sumOf { it.amount }
-                
+
                 _uiState.value = _uiState.value.copy(
                     expenses = expenses,
                     totalAmount = totalAmount,
@@ -173,12 +214,15 @@ class ExpenseViewModel @Inject constructor(
     fun setCustomDateRange(startDate: Long, endDate: Long) {
         _dateRange.value = Pair(startDate, endDate)
         _selectedPeriod.value = TimePeriod.CUSTOM
-        
+
+        // Track analytics
+        analyticsManager.trackDateRangeSelected(startDate, endDate)
+
         viewModelScope.launch {
             val expenses = repository.getExpensesByDateRange(startDate, endDate).first()
             val totalAmount = expenses.sumOf { it.amount }
             val categoryTotals = repository.getCategoryTotalsByDateRange(startDate, endDate).first() ?: emptyList()
-            
+
             _uiState.value = _uiState.value.copy(
                 expenses = expenses,
                 totalAmount = totalAmount,
@@ -222,18 +266,30 @@ class ExpenseViewModel @Inject constructor(
                 month = calendar.get(Calendar.MONTH)
             )
             repository.insertBudget(budget)
+
+            // Track analytics
+            analyticsManager.trackBudgetSet(amount, "Monthly")
+
+            // Trigger In-App Messaging event
+            InAppMessagingManager.triggerEvent(InAppMessagingManager.Events.BUDGET_SET)
         }
     }
 
     fun updateBudget(budget: BudgetEntity, newAmount: Double) {
         viewModelScope.launch {
             repository.updateBudget(budget.copy(monthlyLimit = newAmount))
+
+            // Track analytics
+            analyticsManager.trackBudgetUpdated(budget.monthlyLimit, newAmount, budget.category)
         }
     }
 
     fun deleteBudget(budget: BudgetEntity) {
         viewModelScope.launch {
             repository.deleteBudget(budget)
+
+            // Track analytics
+            analyticsManager.trackBudgetDeleted(budget.monthlyLimit, budget.category)
         }
     }
 }
